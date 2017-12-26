@@ -1,2 +1,2 @@
-# encoder-dev
-Development environment for encoder-*
+# encoder-docker-dev
+docker-compose file for developping encoder-api & encoder-ui

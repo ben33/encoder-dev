@@ -1,0 +1,22 @@
+version: "3"
+services:
+  api:
+    container_name: api
+    image: bfosses/node-ffmpeg-docker:9-alpine
+    command: sh -c "yarn install && yarn run dev"
+    working_dir: /app
+    volumes:
+      - ../encoder-api:/app
+      - ./videos/to-encode:/videos-to-encode
+      - ./videos/encoded:/videos-encoded
+    ports:
+     - "8080:8080"
+  ui:
+    container_name: ui
+    image: node:9-alpine
+    working_dir: /app
+    volumes:
+     - ../encoder-ui:/app
+    command: sh -c "yarn install && yarn run dev"
+    ports:
+     - "4444:4444"
