@@ -1,22 +1,68 @@
-version: "3"
+version: '3.6'
 services:
-  api:
-    container_name: api
-    image: bfosses/node-ffmpeg-docker:9-alpine
-    command: sh -c "yarn install && yarn run dev"
-    working_dir: /app
-    volumes:
-      - ../encoder-api:/app
-      - ./videos/to-encode:/videos-to-encode
-      - ./videos/encoded:/videos-encoded
-    ports:
-     - "8080:8080"
   ui:
     container_name: ui
     image: node:9-alpine
     working_dir: /app
     volumes:
      - ../encoder-ui:/app
-    command: sh -c "yarn install && yarn run dev"
+    command: sh -c "apk update && apk add git && yarn install && yarn dev"
     ports:
-     - "4444:4444"
+     - "8080:8080"
+  api:
+    container_name: api
+    image: node:9-alpine
+    command: sh -c "apk update && apk add git && yarn install && yarn dev"
+    working_dir: /app
+    volumes:
+      - ../encoder-api:/app
+      - ./videos/to-encode:/videos-to-encode
+    ports:
+     - "8081:8080"
+    depends_on: 
+     - bus
+    networks:
+     - bus
+    environment:
+     - BUS_URL=amqp://guest:guest@bus
+  encoder:
+    container_name: encoder
+    image: bfosses/node-ffmpeg-docker:9-alpine
+    command: sh -c "apk update && apk add git && yarn install && yarn dev"
+    working_dir: /app
+    volumes:
+      - ../encoder-ffmpeg:/app
+      - ./videos/to-encode:/videos-to-encode
+    depends_on: 
+     - bus
+    networks:
+     - bus
+    environment:
+     - BUS_URL=amqp://guest:guest@bus
+  queryModels:
+    container_name: queryModels
+    image: node:9-alpine
+    command: sh -c "apk update && apk add git && yarn install && yarn dev"
+    working_dir: /app
+    volumes:
+      - ../encoder-queryModels:/app
+      - ./videos/encoded:/videos-encoded
+    depends_on: 
+     - bus
+    networks:
+     - bus
+  bus:
+    container_name: bus
+    image: rabbitmq:3.7-management-alpine
+    networks:
+     - bus
+    ports:
+     - "8082:15672"
+  eventStore:
+    container_name: eventStore
+    image: mongo:3.6.3-jessie
+    networks:
+     - bus
+  
+networks:
+  bus:
